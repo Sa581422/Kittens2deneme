@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: |
+  this is template for ec2-instance
+Resources:
+  MyWebServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-01c647eace872fc02
+      InstanceType: t2.micro
+      KeyName: Sercankey
+      SecurityGroupIds: !Ref SercanSG
+
+      Tags:
+        - Key: Name
+          Value: !Sub Sercan ${AWS::StackName}
+
+      UserData:
+        Fn::Base64: |
+          #! /bin/bash
+          yum update -y
+          yum install httpd -y
+          FOLDER="https://github.com/Sa581422/Kittens2deneme/blob/master/101-kittens-carousel-static-website-ec2/static-web"
+          cd /var/www/html
+          wget ${FOLDER}/index.html
+          wget ${FOLDER}/cat0.jpg
+          wget ${FOLDER}/cat1.jpg
+          wget ${FOLDER}/cat2.jpg
+          wget ${FOLDER}/cat3.png
+          systemctl start httpd
+          systemctl enable httpd
+
+  SercanSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SSH and TCP # Required
+      GroupName: aslan
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: env
+          Value: Dev
+
+Outputs:
+  WebServerURL:
+    Description: this output gives the URL of EC2
+    Value: !Sub
+      - http://${PublicAddres}
+      - PublicAddres: !GetAtt MyWebServer.PublicDnsName
